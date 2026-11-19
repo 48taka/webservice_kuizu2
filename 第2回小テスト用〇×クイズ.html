@@ -1,0 +1,873 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Webサービス 〇×ドリル</title>
+<style>
+:root{
+  --paper:#f5f1e8; --card:#fffdf8; --ink:#1e2230; --sub:#6b6f7c; --line:#e2dccd;
+  --maru:#d4473b; --maru-bg:#fbe9e6; --batsu:#2d5ea8; --batsu-bg:#e6eef9;
+  --ok:#2c8a5a; --ok-bg:#e5f3ec; --ng:#c43d33; --ng-bg:#fbe8e6; --star:#e0a21b;
+  --radius:16px;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{
+  font-family:"Hiragino Sans","Hiragino Kaku Gothic ProN","Yu Gothic UI","Yu Gothic","Meiryo",system-ui,sans-serif; color:var(--ink);
+  background:var(--paper);
+  background-image:linear-gradient(var(--line) 1px,transparent 1px);
+  background-size:100% 34px; background-attachment:fixed;
+  min-height:100vh; line-height:1.7; -webkit-font-smoothing:antialiased;
+}
+button{font:inherit;color:inherit;cursor:pointer;border:none;background:none}
+button:focus-visible{outline:3px solid #f0b84a;outline-offset:2px}
+.wrap{max-width:760px;margin:0 auto;padding:28px 18px 80px}
+.hidden{display:none!important}
+.warn{background:#fff4d6;border:1.5px solid #ecc76a;border-radius:12px;padding:12px 14px;font-size:13.5px;margin-bottom:16px;line-height:1.6}
+.warn b{display:block;font-size:15px;margin-bottom:2px}
+
+/* header */
+.brand{display:flex;align-items:flex-end;gap:14px;margin:6px 0 22px}
+.brand-mark{font-family:"Hiragino Maru Gothic ProN","BIZ UDPGothic","Yu Gothic","Meiryo",sans-serif;font-weight:900;font-size:40px;line-height:1;letter-spacing:-2px}
+.brand-mark .o{color:var(--maru)} .brand-mark .x{color:var(--batsu)}
+.brand h1{font-family:"Hiragino Maru Gothic ProN","BIZ UDPGothic","Yu Gothic","Meiryo",sans-serif;font-weight:900;font-size:26px;margin:0;line-height:1.2}
+.brand p{margin:2px 0 0;color:var(--sub);font-size:13px}
+
+.card{background:var(--card);border:1.5px solid var(--line);border-radius:var(--radius);padding:20px;box-shadow:0 2px 0 rgba(30,34,48,.05)}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:0;padding:0;overflow:hidden}
+.stat{padding:14px 10px;text-align:center;border-left:1.5px dashed var(--line)}
+.stat:first-child{border-left:none}
+.stat b{display:block;font-size:24px;font-weight:900;line-height:1.2}
+.stat span{font-size:12px;color:var(--sub);white-space:nowrap}
+.stat.wrongs b{color:var(--ng)} .stat.marks b{color:var(--star)}
+
+.sec{margin-top:22px}
+.sec h2{font-size:14px;font-weight:700;margin:0 0 10px;display:flex;align-items:center;gap:8px}
+.sec h2 .n{display:inline-grid;place-items:center;width:22px;height:22px;border-radius:50%;background:var(--ink);color:#fff;font-size:12px}
+.sec h2 small{font-weight:500;color:var(--sub);margin-left:auto;font-size:12px}
+
+.srcs{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.src{display:flex;flex-direction:column;align-items:flex-start;text-align:left;padding:12px 14px 12px 44px;border:1.5px solid var(--line);border-radius:12px;background:var(--card);position:relative;transition:.15s}
+.src::before{content:"";position:absolute;left:14px;top:15px;width:18px;height:18px;border:2px solid #b9b2a0;border-radius:5px;background:#fff}
+.src.on{border-color:var(--ink);background:#fff}
+.src.on::before{background:var(--ink);border-color:var(--ink)}
+.src.on::after{content:"";position:absolute;left:20px;top:18px;width:6px;height:10px;border:solid #fff;border-width:0 2.5px 2.5px 0;transform:rotate(45deg)}
+.src .t{font-weight:700;font-size:15px;line-height:1.3}
+.src .d{font-size:11.5px;color:var(--sub);line-height:1.4;margin-top:3px}
+.src .meter{margin-top:8px;width:100%;height:5px;background:#ece6d7;border-radius:3px;overflow:hidden;display:flex}
+.src .meter i{display:block;height:100%}
+.src .meter .c{background:var(--ok)} .src .meter .w{background:#e9a39b}
+.src .cnt{font-size:11px;color:var(--sub);margin-top:4px}
+
+.seg{display:flex;flex-wrap:wrap;gap:8px}
+.seg button{padding:9px 16px;border:1.5px solid var(--line);border-radius:999px;background:var(--card);font-weight:500;font-size:14px;transition:.15s}
+.seg button.on{background:var(--ink);border-color:var(--ink);color:#fff}
+.seg button:disabled{opacity:.4;cursor:not-allowed}
+.seg button .b{font-size:12px;opacity:.75;margin-left:4px}
+
+.start{margin-top:26px;width:100%;padding:18px;border-radius:14px;background:var(--ink);color:#fff;font-size:18px;font-weight:700;box-shadow:0 4px 0 #000;transition:transform .08s,box-shadow .08s}
+.start:active{transform:translateY(3px);box-shadow:0 1px 0 #000}
+.start:disabled{background:#9a9da6;box-shadow:0 4px 0 #6f727a;cursor:not-allowed}
+.note{font-size:12px;color:var(--sub);text-align:center;margin-top:10px}
+.foot{display:flex;justify-content:space-between;align-items:center;margin-top:26px;font-size:12px;color:var(--sub)}
+.linkbtn{color:var(--sub);text-decoration:underline;font-size:12px}
+.sync{display:inline-flex;align-items:center;gap:6px}
+.sync i{width:7px;height:7px;border-radius:50%;background:#b9b2a0;display:inline-block}
+.sync.on i{background:var(--ok)}
+
+/* quiz */
+.qtop{display:flex;align-items:center;gap:12px;margin-bottom:14px}
+.qtop .back{padding:6px 12px;border:1.5px solid var(--line);border-radius:999px;background:var(--card);font-size:13px}
+.prog{flex:1}
+.prog .bar{height:8px;border-radius:4px;background:#e6dfcf;overflow:hidden}
+.prog .bar i{display:block;height:100%;background:var(--ink);transition:width .3s}
+.prog .lbl{display:flex;justify-content:space-between;font-size:12px;color:var(--sub);margin-top:4px}
+.qcard{position:relative;padding:26px 22px 22px}
+.qmeta{display:flex;gap:8px;align-items:center;margin-bottom:12px;flex-wrap:wrap}
+.tag{font-size:11.5px;font-weight:700;padding:2px 10px;border-radius:999px;background:#efe9da;color:#5a5a4e}
+.tag.lv2{background:#fff1d6;color:#94620b}
+.qno{font-family:"Hiragino Maru Gothic ProN","BIZ UDPGothic","Yu Gothic","Meiryo",sans-serif;font-weight:900;font-size:15px;color:var(--sub)}
+.qtext{font-size:19px;font-weight:500;line-height:1.85;margin:0;word-break:break-word}
+.qtext code,.exp code{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:.88em;background:#f1ece0;padding:1px 5px;border-radius:5px}
+.mark{position:absolute;top:14px;right:14px;width:42px;height:42px;border-radius:50%;display:grid;place-items:center;font-size:22px;color:#c9c1ad;transition:.15s}
+.mark:hover{background:#f4efe3}
+.mark.on{color:var(--star)}
+.answers{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:18px}
+.ans{aspect-ratio:2.1/1;border-radius:18px;border:2.5px solid var(--line);background:var(--card);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;font-family:"Hiragino Maru Gothic ProN","BIZ UDPGothic","Yu Gothic","Meiryo",sans-serif;font-weight:900;transition:.12s;box-shadow:0 4px 0 var(--line)}
+.ans .sym{font-size:clamp(46px,11vw,70px);line-height:1}
+.ans .k{font-weight:500;font-size:11px;color:var(--sub)}
+.ans.o .sym{color:var(--maru)} .ans.x .sym{color:var(--batsu)}
+.ans.o:hover:not(:disabled){background:var(--maru-bg);border-color:var(--maru)}
+.ans.x:hover:not(:disabled){background:var(--batsu-bg);border-color:var(--batsu)}
+.ans:active:not(:disabled){transform:translateY(3px);box-shadow:0 1px 0 var(--line)}
+.ans:disabled{cursor:default}
+.ans.dim{opacity:.35}
+.ans.picked.o{background:var(--maru-bg);border-color:var(--maru);box-shadow:0 4px 0 #e8b1aa}
+.ans.picked.x{background:var(--batsu-bg);border-color:var(--batsu);box-shadow:0 4px 0 #b0c4e6}
+
+.verdict{margin-top:16px;border-radius:var(--radius);padding:18px 20px;border:1.5px solid;animation:pop .22s ease-out}
+@keyframes pop{from{transform:translateY(6px);opacity:0}to{transform:none;opacity:1}}
+.verdict.ok{background:var(--ok-bg);border-color:#b7dcc7}
+.verdict.ng{background:var(--ng-bg);border-color:#efc0ba}
+.verdict .head{display:flex;align-items:center;gap:10px;font-weight:900;font-size:20px}
+.verdict.ok .head{color:var(--ok)} .verdict.ng .head{color:var(--ng)}
+.verdict .head .right{margin-left:auto;font-size:14px;font-weight:700;color:var(--ink)}
+.verdict .head .right b{font-family:"Hiragino Maru Gothic ProN","BIZ UDPGothic","Yu Gothic","Meiryo",sans-serif;font-size:26px;vertical-align:-3px}
+.exp{margin:10px 0 0;font-size:15px}
+.ref{margin-top:10px;font-size:12.5px;color:var(--sub);display:flex;gap:6px;align-items:flex-start}
+.ref::before{content:"📄";filter:grayscale(1);opacity:.7}
+.next{margin-top:16px;width:100%;padding:15px;border-radius:14px;background:var(--ink);color:#fff;font-weight:700;font-size:16px;box-shadow:0 4px 0 #000}
+.next:active{transform:translateY(3px);box-shadow:0 1px 0 #000}
+.hint{font-size:11.5px;color:var(--sub);text-align:center;margin-top:8px}
+
+/* result */
+.score{text-align:center;padding:30px 20px}
+.score .big{font-family:"Hiragino Maru Gothic ProN","BIZ UDPGothic","Yu Gothic","Meiryo",sans-serif;font-weight:900;font-size:64px;line-height:1}
+.score .big small{font-size:26px;color:var(--sub)}
+.score .pct{font-size:15px;color:var(--sub);margin-top:6px}
+.score .msg{font-size:17px;font-weight:700;margin-top:12px}
+.ring{width:150px;height:150px;margin:0 auto 14px;position:relative}
+.ring svg{transform:rotate(-90deg)}
+.ring .in{position:absolute;inset:0;display:grid;place-items:center;font-family:"Hiragino Maru Gothic ProN","BIZ UDPGothic","Yu Gothic","Meiryo",sans-serif;font-weight:900;font-size:34px}
+.btns{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:16px}
+.btn2{padding:14px;border-radius:12px;font-weight:700;border:1.5px solid var(--ink);background:var(--card)}
+.btn2.dark{background:var(--ink);color:#fff}
+.btn2:disabled{opacity:.4;cursor:not-allowed}
+.rlist{margin-top:22px;display:flex;flex-direction:column;gap:10px}
+.ritem{padding:14px 16px;display:grid;grid-template-columns:30px 1fr auto;gap:10px;align-items:start}
+.ritem .res{font-family:"Hiragino Maru Gothic ProN","BIZ UDPGothic","Yu Gothic","Meiryo",sans-serif;font-weight:900;font-size:22px;line-height:1.2}
+.ritem.ok .res{color:var(--ok)} .ritem.ng .res{color:var(--ng)}
+.ritem .rq{font-size:14px}
+.ritem .rexp{font-size:13px;color:#3f4350;margin-top:6px;padding-top:6px;border-top:1px dashed var(--line)}
+
+.ritem .mark{position:static;width:34px;height:34px;font-size:18px}
+
+/* dialog */
+.dlg{position:fixed;inset:0;background:rgba(30,34,48,.45);display:grid;place-items:center;padding:20px;z-index:20}
+.dlg .card{max-width:380px;width:100%}
+.dlg h3{margin:0 0 6px}
+.dlg p{margin:0;font-size:14px;color:var(--sub)}
+
+@media (max-width:560px){
+  .wrap{padding:18px 14px 60px}
+  .brand h1{font-size:21px} .brand-mark{font-size:32px}
+  .srcs{grid-template-columns:1fr}
+  .stat b{font-size:20px}
+  .stat{padding:12px 4px}
+  .stat span{font-size:10.5px}
+  .qtext{font-size:17px}
+  .ans{aspect-ratio:1.6/1}
+  .hint{display:none}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<div id="jsWarn" class="warn"><b>この画面では問題を解けません</b>ファイルのプレビュー表示ではプログラムが動きません。共有メニューの「Safariで開く」「Chromeで開く」などから、ブラウザで開いてください。</div>
+
+<!-- HOME -->
+<section id="home">
+  <div class="brand">
+    <div class="brand-mark"><span class="o">○</span><span class="x">×</span></div>
+    <div>
+      <h1>Webサービス 〇×ドリル</h1>
+      <p>授業資料（第3〜5回）から作った正誤問題</p>
+    </div>
+  </div>
+
+  <div class="card stats">
+    <div class="stat"><b id="stTotal">84</b><span>全問題</span></div>
+    <div class="stat"><b id="stDone">0</b><span>解いた</span></div>
+    <div class="stat wrongs"><b id="stWrong">0</b><span>要復習</span></div>
+    <div class="stat marks"><b id="stMark">0</b><span>ブックマーク</span></div>
+  </div>
+
+  <div class="sec">
+    <h2><span class="n">1</span>範囲（資料）<small><button class="linkbtn" id="allSrc">すべて選択</button></small></h2>
+    <div class="srcs" id="srcs"><button class="src on" type="button"><span class="t">サーバ</span><span class="d">Webアプリケーションサーバ／オブジェクト指向とJava</span><span class="meter"></span><span class="cnt">30問</span></button><button class="src on" type="button"><span class="t">JAX</span><span class="d">分散処理技術・Webサービス（REST/SOAP）</span><span class="meter"></span><span class="cnt">26問</span></button><button class="src on" type="button"><span class="t">補遺・課題</span><span class="d">Webアプリケーションサーバ 補遺と課題</span><span class="meter"></span><span class="cnt">9問</span></button><button class="src on" type="button"><span class="t">JavaScript</span><span class="d">JavaScript（クライアントサイド）</span><span class="meter"></span><span class="cnt">19問</span></button></div>
+  </div>
+
+  <div class="sec">
+    <h2><span class="n">2</span>出題する問題</h2>
+    <div class="seg" id="poolSeg">
+      <button data-v="all" class="on">すべての問題<span class="b" id="cAll"></span></button>
+      <button data-v="wrong">間違えた問題だけ<span class="b" id="cWrong"></span></button>
+      <button data-v="mark">ブックマークだけ<span class="b" id="cMark"></span></button>
+    </div>
+  </div>
+
+  <div class="sec">
+    <h2><span class="n">3</span>出題数</h2>
+    <div class="seg" id="numSeg">
+      <button data-v="10" class="on">10問</button>
+      <button data-v="20">20問</button>
+      <button data-v="30">30問</button>
+      <button data-v="0">全部</button>
+    </div>
+  </div>
+
+  <div class="sec">
+    <h2><span class="n">4</span>出題順</h2>
+    <div class="seg" id="ordSeg">
+      <button data-v="rand" class="on">ランダム</button>
+      <button data-v="seq">資料の順番</button>
+    </div>
+  </div>
+
+  <button class="start" id="startBtn">はじめる</button>
+  <div class="note" id="startNote"></div>
+
+  <div class="foot">
+    <span class="sync on" id="sync"><i></i><span>記録はこの端末のブラウザ内だけに保存されます</span></span>
+    <button class="linkbtn" id="resetBtn">記録をリセット</button>
+  </div>
+</section>
+
+<!-- QUIZ -->
+<section id="quiz" class="hidden">
+  <div class="qtop">
+    <button class="back" id="quitBtn">← 中断</button>
+    <div class="prog">
+      <div class="bar"><i id="pbar"></i></div>
+      <div class="lbl"><span id="plbl"></span><span id="pscore"></span></div>
+    </div>
+  </div>
+
+  <div class="card qcard">
+    <div class="qmeta"><span class="qno" id="qno"></span><span class="tag" id="qsrc"></span></div>
+    <button class="mark" id="qmark" title="ブックマーク (B)" aria-label="ブックマーク">☆</button>
+    <p class="qtext" id="qtext"></p>
+  </div>
+
+  <div class="answers">
+    <button class="ans o" id="btnO" aria-label="正しい"><span class="sym">○</span><span class="k">正しい　[O]</span></button>
+    <button class="ans x" id="btnX" aria-label="誤り"><span class="sym">×</span><span class="k">誤り　[X]</span></button>
+  </div>
+
+  <div id="verdict" class="verdict hidden">
+    <div class="head"><span id="vhead"></span><span class="right">正解は <b id="vans"></b></span></div>
+    <p class="exp" id="vexp"></p>
+    <div class="ref" id="vref"></div>
+  </div>
+  <button class="next hidden" id="nextBtn">次の問題へ →</button>
+  <div class="hint" id="kbHint">キーボード：O / X で回答、Enter で次へ、B でブックマーク</div>
+</section>
+
+<!-- RESULT -->
+<section id="result" class="hidden">
+  <div class="card score">
+    <div class="ring">
+      <svg width="150" height="150" viewBox="0 0 150 150"><circle cx="75" cy="75" r="64" fill="none" stroke="#ece6d7" stroke-width="14"/><circle id="ringArc" cx="75" cy="75" r="64" fill="none" stroke="#2c8a5a" stroke-width="14" stroke-linecap="round" stroke-dasharray="402.1" stroke-dashoffset="402.1" style="transition:stroke-dashoffset .8s ease-out"/></svg>
+      <div class="in" id="rPct">0%</div>
+    </div>
+    <div class="big" id="rBig"></div>
+    <div class="msg" id="rMsg"></div>
+    <div class="btns">
+      <button class="btn2 dark" id="retryWrong">間違えた問題を解き直す</button>
+      <button class="btn2" id="toHome">ホームに戻る</button>
+    </div>
+  </div>
+  <div class="rlist" id="rlist"></div>
+</section>
+
+</div>
+
+<div class="dlg hidden" id="dlg">
+  <div class="card">
+    <h3>記録をリセットしますか？</h3>
+    <p>解答履歴・間違えた問題・ブックマークがすべて消えます。元には戻せません。</p>
+    <div class="btns">
+      <button class="btn2" id="dlgNo">キャンセル</button>
+      <button class="btn2 dark" id="dlgYes" style="background:var(--ng);border-color:var(--ng)">リセットする</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// a: true = ○ / false = ×,  lv: 1 = 基本確認, 2 = 試験対策（引っかけ）
+const SOURCES = {
+  s3:  { short: "サーバ",   name: "Webアプリケーションサーバ／オブジェクト指向とJava", file: "web_services_3_server" },
+  s4:  { short: "JAX",      name: "分散処理技術・Webサービス（REST/SOAP）",         file: "web_services_4_jax" },
+  s4a: { short: "補遺・課題", name: "Webアプリケーションサーバ 補遺と課題",           file: "web_services_4annexkadai6" },
+  s5:  { short: "JavaScript", name: "JavaScript（クライアントサイド）",                file: "web_services_5_js" },
+};
+
+const QUESTIONS = [
+// ===== 第3回 サーバ =====
+{id:"s3-01",src:"s3",lv:1,a:true,
+ q:"Web利用時は、ブラウザがHTTPでリクエストメッセージをWebサーバに送り、Webサーバがレスポンスメッセージを返す。",
+ exp:"ブラウザ（クライアント）がHTTPで要求を送り、サーバが該当ファイル（index.html など）を応答として返します。受け取ったブラウザがそれを解釈して画面表示します。",
+ ref:"Webシステムのメッセージ交換"},
+{id:"s3-02",src:"s3",lv:1,a:true,
+ q:"Webページ／Webアプリは通常ポート番号80番を使い（URLでは省略される）、httpsでは443番を使う。",
+ exp:"通常は80番（省略されて見えない）、httpsは443番です。:8080 のようにそれ以外の番号もアプリで付与できますが、周知方法が問題になります。",
+ ref:"Webサーバ（Httpサーバ）部"},
+{id:"s3-03",src:"s3",lv:2,a:false,
+ q:"httpsの標準のポート番号は8080番である。",
+ exp:"httpsは443番です。8080番は「80番以外の番号もアプリケーションで付与可能」という例として挙げられているものです。",
+ ref:"Webサーバ（Httpサーバ）部"},
+{id:"s3-04",src:"s3",lv:2,a:true,
+ q:"Web三層モデル（Webサーバ・アプリケーションサーバ・DBサーバ）は論理モデルなので、物理的に3台に分かれている必要はない。",
+ exp:"資料では「Web三層モデルは論理モデルであり、物理的に三つ分かれている必要もない」と説明されています。",
+ ref:"Webサーバ・アプリケーションサーバ"},
+{id:"s3-05",src:"s3",lv:1,a:true,
+ q:"CGIは、リクエストごとにサーバが新しいプロセスを起動して処理するため、オーバヘッドとリソース消費が性能に影響する。",
+ exp:"CGIはアクセスのたびに新しいプロセスを起動します。そのためオーバヘッドとリソース消費が性能に影響します。",
+ ref:"サーバ側でプログラム処理を実行する形態(1) CGI"},
+{id:"s3-06",src:"s3",lv:2,a:false,
+ q:"CGIのプログラムを書ける言語はJavaに限られる。",
+ exp:"CGIは言語を特定のものに限りません（Perl、シェルスクリプトなど）。「CGIは言語を選べる」のが特徴です。",
+ ref:"サーバ側でプログラム処理を実行する形態(1) CGI／サーバの分類"},
+{id:"s3-07",src:"s3",lv:1,a:false,
+ q:"Servletは、リクエストごとに新しいプロセスを起動して処理するので、CGIより重い。",
+ exp:"逆です。ServletはServletコンテナが常駐し、軽量なスレッドで処理を実行します。リクエストごとにプロセスを起動するCGIより軽量です。",
+ ref:"サーバ側でプログラム処理を実行する形態(2) サーブレット"},
+{id:"s3-08",src:"s3",lv:2,a:false,
+ q:"Servletは、JavaプログラムでHTML文書を作るので、画面デザインの作成や変更が容易である。",
+ exp:"逆です。JavaでHTML文書を作る（out.println で文字列を出力する）ので画面デザインは面倒で、変更時の影響も大きくなります。これを解決したのがJSPです。",
+ ref:"サーバ側でプログラム処理を実行する形態(2) サーブレット"},
+{id:"s3-09",src:"s3",lv:1,a:true,
+ q:"JSPでは、<% %> タグを使ってHTMLの中にJavaのプログラムを埋め込める。",
+ exp:"JSPは <% %> タグでHTMLの中にJava文法のプログラムを埋め込みます。処理自体はサーブレットコンテナが行います。",
+ ref:"サーバ側でプログラム処理を実行する形態(2) JSP"},
+{id:"s3-10",src:"s3",lv:1,a:true,
+ q:"Servletで「http://〜?name=haruhi」のURL引数を取得するには、request.getParameter(\"name\") のように引数名を指定する。",
+ exp:"HttpServletRequest の getParameter に引数名を指定すると、ユーザが指定した値を取得できます。",
+ ref:"サーブレットによるWebアプリケーション開発"},
+{id:"s3-11",src:"s3",lv:1,a:true,
+ q:"PHPは、HTMLの中に <?php 〜 ?> タグでプログラムを埋め込むサーバサイドスクリプトである。",
+ exp:"PHPはWebサーバ上でPHPスクリプトを動かすサーバサイドスクリプトです。URLは http://〜/××.php が多く、Zend Engineで実行時コンパイルされます。",
+ ref:"サーバ側でプログラム処理を実行する形態(3) PHP"},
+{id:"s3-12",src:"s3",lv:1,a:false,
+ q:"ASP.NETは、Javaでプログラムを書き、Javaが動く環境ならどのOSでも動作する。",
+ exp:"それはServlet／JSPの特徴です。ASP.NETはマイクロソフトのIIS上で動くWindows環境専用のフレームワークで、C#がメイン（VBも可）です。",
+ ref:"サーバ側でプログラム処理を実行する形態(4) ASP.NET／サーバの分類"},
+{id:"s3-13",src:"s3",lv:2,a:false,
+ q:"Node.jsは、リクエストごとにスレッドを生成するマルチスレッド方式で並列処理を行う。",
+ exp:"Node.jsは1プロセス1スレッドのイベントループ方式です。明示的なスレッドは使わず、非同期I/Oで中断しながら同時処理を実現します。",
+ ref:"サーバ側でプログラム処理を実行する形態(5) Node.js"},
+{id:"s3-14",src:"s3",lv:2,a:false,
+ q:"WSGIは、CGIと同じようにリクエストごとにプロセスを生成し、処理が終わると消滅させる。",
+ exp:"WSGIは常駐した複数のワーカ（プロセス）を次々と再利用（持ち回り）します。リクエストごとにプロセスを生成・消滅させるCGIとはここが違います。",
+ ref:"サーバ側でプログラム処理を実行する形態(6) WSGI"},
+{id:"s3-15",src:"s3",lv:1,a:true,
+ q:"ASGIはWSGIを拡張したものと位置付けられ、WebSocketや長時間接続を扱える。FastAPIなどが採用している。",
+ exp:"ASGIはPython向けで、イベントループによる非同期タスクを扱い、非同期と同期の両方に対応します（Node.js的）。大容量向けです。",
+ ref:"サーバ側でプログラム処理を実行する形態(6) ASGI"},
+{id:"s3-16",src:"s3",lv:2,a:false,
+ q:"Flask や Django は、ASGIを採用する代表的なWebフレームワークとして紹介されている。",
+ exp:"Flask／DjangoはWSGIを採用するフレームワークとして紹介されています。ASGIの例はFastAPIとStarletteです。",
+ ref:"サーバ側でプログラム処理を実行する形態(6)"},
+{id:"s3-17",src:"s3",lv:2,a:false,
+ q:"ReactはC#でUIのComponentを作る仕組みである。",
+ exp:"ReactはJavaScript／TypeScriptでComponentを作ります。C#でComponentを作るのはBlazorです。",
+ ref:"React"},
+{id:"s3-18",src:"s3",lv:1,a:true,
+ q:"Javaは、ソースをバイトコード（中間言語）にコンパイルし、Java仮想マシン（VM）上で実行するので、プラットフォームに依存しない。",
+ exp:"Javaはコンパイラとインタプリタの中間型の言語です。バイトコードと仮想マシンの組み合わせで、プラットフォームに依存しない実行を実現しています。",
+ ref:"Javaの特徴(1)(3)"},
+{id:"s3-19",src:"s3",lv:2,a:false,
+ q:"JavaはC++の機能を受け継いでいるので、クラスの多重継承ができる。",
+ exp:"多重継承はC++から取り除かれた機能で、Javaは単一継承です。ただし「インタフェース」を使えば、多重継承に近いことを記述できます。",
+ ref:"Javaの特徴(2)(4)"},
+{id:"s3-20",src:"s3",lv:1,a:true,
+ q:"Javaには、不要になったメモリ領域をVMが解放するガベッジコレクションがある。",
+ exp:"Javaではガベッジコレクションにより、不要になった領域をVMが解放します。",
+ ref:"Javaの特徴(4)"},
+{id:"s3-21",src:"s3",lv:2,a:false,
+ q:"C++には、記憶の空き領域を自動で管理する仕組み（ガベッジコレクション）がある。",
+ exp:"C++は記憶の空き領域の自動管理機構をもちません。new で生成したオブジェクトは delete で削除します。",
+ ref:"C++の概要"},
+{id:"s3-22",src:"s3",lv:1,a:true,
+ q:"C++では、スーパクラスで virtual 指定した関数をサブクラスで再定義でき、実行時バインディングによってポリモフィズムを実現する。",
+ exp:"virtual 指定した関数は、インスタンス化されたクラスの処理が実行時に選ばれます。例：A *ab = new B(); ab->printName(); と書くと \"B\" が表示されます。",
+ ref:"C++の仮想関数"},
+{id:"s3-23",src:"s3",lv:1,a:true,
+ q:"スレッドは、プロセスの中でメモリやI/Oアクセスを共用しつつ並行処理を行うので軽量だが、排他制御が必要になる。",
+ exp:"プロセスは独立したメモリ空間を持つため重くなります。スレッドは軽量ですが、預金管理の例のように、同時に書き換えると矛盾が起きるので排他制御が必要です。",
+ ref:"JavaのThread"},
+{id:"s3-24",src:"s3",lv:1,a:true,
+ q:"Javaで割り込まれたくない一連の処理は synchronized で囲んで排他制御する。",
+ exp:"synchronized (LOCK) { … } のように囲みます。ロック用には Object クラスのインスタンスを使う例が多いです。排他制御を間違えるとデッドロックが起きる可能性があります。",
+ ref:"JavaのThread（排他制御）"},
+{id:"s3-25",src:"s3",lv:2,a:false,
+ q:"Javaの try-catch 構文で、finally ブロックは例外が発生しなかったときにだけ実行される。",
+ exp:"finally ブロックは、例外が発生したかどうかに関係なく実行されます。",
+ ref:"Javaの特徴的なコーディング（例外処理）"},
+{id:"s3-26",src:"s3",lv:1,a:true,
+ q:"Javaで、メソッドに throws Exception を宣言すると、例外処理を呼び出し側に任せられる。",
+ exp:"void func() throws Exception { … } と宣言すると、利用する側が例外処理を記述します。",
+ ref:"Javaの特徴的なコーディング（例外処理）"},
+{id:"s3-27",src:"s3",lv:1,a:true,
+ q:"JavaのSetは重複した要素を許さず、TreeSetでは要素がabc順に並ぶ。",
+ exp:"Setは同じ要素を入れても1個だけ記録します。順序に関係のないHashSet（資料ではHashedSet）と、abc順に並ぶTreeSetがあります。",
+ ref:"Javaの特徴的なコーディング（可変長配列）"},
+{id:"s3-28",src:"s3",lv:2,a:false,
+ q:"JavaのMapでは、同じkeyを使って複数の値を別々に記録できる。",
+ exp:"Mapはkeyとvalueの組み合わせを記録します。keyはユニークでなければならず、同じkeyで put すると値が上書きされます。",
+ ref:"Javaの特徴的なコーディング（可変長配列）"},
+{id:"s3-29",src:"s3",lv:1,a:true,
+ q:"JIT（Just In Time）コンパイルは、実行直前にまとめて機械語へ変換して実行効率を上げるが、開始時の待ち時間やメモリ消費の増加という欠点がある。",
+ exp:"中間コードを逐次解釈するのではなく、実行直前にまとめて変換して効率を上げます。変換の分だけ待ち時間が生じ、変換後のコードを保存するのでメモリ消費が増えます。",
+ ref:"Just In Time Compile"},
+{id:"s3-30",src:"s3",lv:2,a:false,
+ q:"Javaで new FileOutputStream(file, false) とすると、既存ファイルの末尾に追記される。",
+ exp:"false は上書きです。true を指定すると後ろに追加（append）されます。",
+ ref:"Javaの特徴的なコーディング（ファイル入出力処理）"},
+
+// ===== 第4回 JAX（分散処理・Webサービス） =====
+{id:"s4-01",src:"s4",lv:1,a:true,
+ q:"Java RMIを使うと、通信手順を意識せずに、普通のオブジェクトのメソッドを呼び出すようにネットワークの向こうのオブジェクトを操作できる。",
+ exp:"RMI（Remote Method Invocation）はjava.rmiパッケージを使います。y = o.method(x); のように書ける「オブジェクト指向RPC」です。",
+ ref:"代表的な分散処理方式 Java RMI"},
+{id:"s4-02",src:"s4",lv:2,a:false,
+ q:"RPC（Remote Procedure Call）はオブジェクトの概念を持ち、o.method(x) のように記述する。",
+ exp:"RPCにはオブジェクトという概念がなく、y = f(x); のように書きます。それをオブジェクト指向化したのがJava RMIです。",
+ ref:"代表的な分散処理方式 RPC"},
+{id:"s4-03",src:"s4",lv:2,a:false,
+ q:"Java RMIでは、クライアント側にスケルトン（Skel）を、サーバ側にスタブ（Stub）を用意する。",
+ exp:"逆です。クライアント側がスタブ、サーバ側がスケルトンです。スタブが引数をストリームに変換し、スケルトンがそれを受け取ってリモートオブジェクトのメソッドを呼び出します。",
+ ref:"Java RMIのアーキテクチャ"},
+{id:"s4-04",src:"s4",lv:1,a:false,
+ q:"RMIレジストリでは、lookupメソッドで名前を登録し、bindメソッドで参照する。",
+ exp:"逆です。bind() で登録し、lookup() で検索（参照）します。",
+ ref:"Java RMIのアーキテクチャ"},
+{id:"s4-05",src:"s4",lv:2,a:false,
+ q:"RMIレジストリを再起動しても、登録した名前はそのまま残る。",
+ exp:"再起動すると登録した名前は消去されます。名前を再登録するときは rebind を使います。",
+ ref:"Java RMIのアーキテクチャ"},
+{id:"s4-06",src:"s4",lv:1,a:true,
+ q:"CORBAはOMG（Object Management Group）による分散オブジェクト技術で、通信にはIIOPというプロトコルを使う。",
+ exp:"CORBAは、異なる言語で実装されたソフトウェアを様々なコンピュータ上で相互に利用するための技術です。通信にはIIOP（Internet Inter-ORB Protocol）を使います。",
+ ref:"代表的な分散処理方式 CORBA"},
+{id:"s4-07",src:"s4",lv:2,a:false,
+ q:"CORBAの通信（IIOP）はファイアウォールを越えやすいので、インターネット経由で広く使われている。",
+ exp:"IIOPはファイアウォールでブロックされることが多く、インターネットを通した利用は少ないです。ファイアウォールを越えやすいのはHTTPを使うWebサービス（SOAP／REST）です。",
+ ref:"代表的な分散処理方式 CORBA／Webサービスの特徴"},
+{id:"s4-08",src:"s4",lv:1,a:true,
+ q:"CORBAでは、IDLでインタフェース仕様を定義し、IDLコンパイラで自動生成されるスタブとスケルトンを介して通信する。",
+ exp:"IDL（Interface Definition Language）で仕様を書き、そこからスタブとスケルトンを自動生成します。通信部分はこの2つが隠蔽します。",
+ ref:"CORBAによる分散オブジェクトコンピューティング"},
+{id:"s4-09",src:"s4",lv:1,a:true,
+ q:"gRPCはGoogleが開発したRPCフレームワークで、IDL（データ形式の規定を含む）にProtocol Buffersを採用している。",
+ exp:"gRPCはオープンソースで、Java、Go、C++、Pythonなど幅広い言語に対応します。マイクロサービス群へのアクセスに使われます。",
+ ref:"代表的な分散処理方式 gRPC"},
+{id:"s4-10",src:"s4",lv:2,a:false,
+ q:"gRPCはテキスト形式のJSONでデータをやり取りするので、可読性が高い。",
+ exp:"gRPCはバイナリ形式のProtocol Buffersを使うため、可読性は低いです。そのかわり通信効率が良く、IoTのように通信環境が限られる場合に向いています。",
+ ref:"gRPC（言語に依存しないサービス間通信）"},
+{id:"s4-11",src:"s4",lv:1,a:false,
+ q:"gRPCの通信プロトコルには、CORBAと同じIIOPが使われる。",
+ exp:"gRPCはprotobufのバイナリ形式とHTTP/2で通信します。IIOPはCORBAの通信プロトコルです。",
+ ref:"PythonによるgRPC／代表的な分散処理方式 CORBA"},
+{id:"s4-12",src:"s4",lv:1,a:false,
+ q:"gRPCの通信形態は、1回のrequestに1回のresponseを返すUnary RPCの1種類だけである。",
+ exp:"gRPCにはUnary RPC、Server streaming RPC、Client streaming RPC、Bidirectional streaming RPCの4つの形態があります。ストリーミングに対応しているのでリアルタイム通信もできます。",
+ ref:"gRPC通信方式の種類"},
+{id:"s4-13",src:"s4",lv:1,a:true,
+ q:"EJBのステートレスセッションBeanは、システム起動時に複数個を生成しておき（プーリング）、処理要求に割り当てることで処理負荷を軽減する。",
+ exp:"ステートレスセッションBeanは単発のトランザクション用です。予め複数個を生成しておくプーリングで処理負荷を軽減します。",
+ ref:"セッションBeanとエンティティBean"},
+{id:"s4-14",src:"s4",lv:2,a:false,
+ q:"エンティティBeanは、株価計算のように単発で処理を要求されて結果を返す、ライフサイクルの短い処理に使う。",
+ exp:"それはセッションBeanの説明です。エンティティBeanは、購入伝票のように永続的な（ある程度長い）処理に使い、通常はリレーショナルDBの1レコードに対応付けられます。",
+ ref:"セッションBeanとエンティティBean"},
+{id:"s4-15",src:"s4",lv:1,a:true,
+ q:"Webサービス（SOAP／REST）はHTTPを使うので、ファイアウォールを越えたシステム間連携がしやすい。",
+ exp:"HTTPを使うためファイアウォール越えが容易です（CORBAでは困難）。また、記述にXML／JSONを使うので、ハードウェアや実行環境に依存しません。",
+ ref:"Webサービスの特徴"},
+{id:"s4-16",src:"s4",lv:2,a:false,
+ q:"SOAP方式は、プロトコルやデータ構造を詳細に規定した元祖の方式で、現在のWebサービスの主流である。",
+ exp:"SOAPは元祖ですが、実装の負担が大きいため廃れてきています。現在の主流はREST方式です。",
+ ref:"Webサービスの形態"},
+{id:"s4-17",src:"s4",lv:1,a:true,
+ q:"RESTは、HTTPメソッド（GET、PUT、POST、DELETE）でWeb上のリソースのCRUD操作を提供する。",
+ exp:"CRUDはCreate、Read、Update、Deleteの略です。リソースはURIで一意に決まり、URLにパラメタを付けてアクセスすると操作が実行されます。",
+ ref:"REST型Webサービス"},
+{id:"s4-18",src:"s4",lv:1,a:true,
+ q:"REST型のWebサービスは、状態を持たない単発の処理で、応答はXMLやJSONなどの形式で返す。",
+ exp:"RESTは状態を持たない単発処理です。アクセスはGET型が本来の形で、POST型は亜流とされています。",
+ ref:"REST型Webサービス"},
+{id:"s4-19",src:"s4",lv:1,a:true,
+ q:"JAX-RSでは、1つのJavaクラスが1つのアプリケーションに対応し、1つのメソッドが1ページに対応する。パスは @Path アノテーションで指定する。",
+ exp:"クラス宣言の上の @Path(\"/archi\") でアプリを、メソッドの上の @Path(\"/index.html\") でページを指定します。Servletのような配備やサーブレットマッピングは不要です。",
+ ref:"Webアプリケーションのプログラミング（JAX-RS）"},
+{id:"s4-20",src:"s4",lv:2,a:true,
+ q:"JAX-RSで @GET を付けたメソッドにPOSTでアクセスすると、405エラーになる。",
+ exp:"@GET はGET型のアクセスだけを許します。POSTでアクセスすると405エラーになります。",
+ ref:"Webアプリケーションのプログラミング（JAX-RS）"},
+{id:"s4-21",src:"s4",lv:2,a:false,
+ q:"JAX-RSで、URL内の引数（例：/keisan/add?a=100&b=200）を受け取るには @FormParam を使う。",
+ exp:"URL内の引数（GET）は @QueryParam で受け取ります。@FormParam はPOST型で、フォームから送られる引数を受け取るときに使います。",
+ ref:"Webサービスのプログラミング（JAX-RS）"},
+{id:"s4-22",src:"s4",lv:1,a:true,
+ q:"Servletでは、URLのパスとJavaクラスの対応関係を web.xml に記述する（サーブレットマッピング）。",
+ exp:"<servlet> でクラスに名前を付け、<servlet-mapping> でその名前と <url-pattern> を対応させます。初心者には障害になりやすく、熟練者でも面倒な作業です。",
+ ref:"ServletによるWebサービス提供（Servletマッピング）"},
+{id:"s4-23",src:"s4",lv:1,a:false,
+ q:"WSDLは、Webサービスの機能や利用方法を記述するJSONベースの言語である。",
+ exp:"WSDL（Web Services Description Language）はXMLベースの言語です。WSDLからJavaのスタブを自動生成できます。",
+ ref:"Webサービス記述言語（WSDL）"},
+{id:"s4-24",src:"s4",lv:1,a:true,
+ q:"JAX-WSのクライアントを作るときは、サービスのWSDLのURLを指定して wsimport ツールを起動し、スタブを生成する。",
+ exp:"例：wsimport -keep http://localhost:8091/wisequotes?wsdl と実行すると、スタブ関連のJavaファイルが生成されます。",
+ ref:"JAX-WSのプログラム開発"},
+{id:"s4-25",src:"s4",lv:1,a:true,
+ q:"SOAPメッセージは、エンベロープの中にヘッダとボディを持ち、ボディにメソッド宣言や引数（データ）を記述する。",
+ exp:"<SOAP-ENV:Envelope> の中に <SOAP-ENV:Header> と <SOAP-ENV:Body> があります。ボディにメソッド宣言や引数をXMLで記述します。",
+ ref:"SOAPの特徴／SOAPの記述例"},
+{id:"s4-26",src:"s4",lv:2,a:false,
+ q:"マーシャリングとは、受け取ったXML文書をJavaオブジェクトに変換することである。",
+ exp:"それはアンマーシャリングです。マーシャリングは、相手に合わせた形式に変換すること（JavaオブジェクトをXML文書へ変換すること）です。",
+ ref:"JAX-WSのプログラム開発（マーシャリング）"},
+
+// ===== 第4回 補遺と課題 =====
+{id:"s4a-01",src:"s4a",lv:1,a:true,
+ q:"Blazorでは、ボタンや入力欄などの部品をコンポーネント（.razorファイル）として定義し、独自のタグ名で呼び出せる。",
+ exp:"BlazorはHTMLに似た独自タグ（コンポーネント）で画面を組み立て、そのタグの処理をC#で記述します。HTMLに似たRazor構文も使えます。",
+ ref:"Blazorフレームワーク利用"},
+{id:"s4a-02",src:"s4a",lv:2,a:false,
+ q:"Blazorでは、コンポーネントのC#処理は @code ブロックの中にしか書けない。",
+ exp:"処理は @code 以外に、別ファイル（.cs）にも書けます。画面（.razor）と処理（.cs、例：MyButton.razor.cs）を別ファイルに分けられます。",
+ ref:"Blazorフレームワーク利用"},
+{id:"s4a-03",src:"s4a",lv:1,a:true,
+ q:"WebAssemblyは、ブラウザ上でプログラム（バイナリ）を実行するための、ブラウザ各社共通の技術規格である。",
+ exp:"各社が独自方式を作るのではなく共通の仕様に対応することで、Webアプリの移植性を高められます。",
+ ref:"Web Assembly"},
+{id:"s4a-04",src:"s4a",lv:2,a:false,
+ q:"WebAssemblyのバイナリ（.wasm）は、CPUが直接実行する機械語である。",
+ exp:"バイナリといっても機械語ではなくバイトコードです。ブラウザのWasm実行エンジン（仮想的な命令セット）が実行します。",
+ ref:"Web Assembly"},
+{id:"s4a-05",src:"s4a",lv:1,a:true,
+ q:"WebAssemblyを使うと、C、C++、RustなどJavaScript以外の言語で書いたプログラムもブラウザ上で実行できる。",
+ exp:"「言語の選択肢の拡大」がWebAssemblyの特徴の一つです。Blazor WebAssemblyは、この仕組みでC#／.NETのプログラムをブラウザ上で動かします。",
+ ref:"Web Assembly"},
+{id:"s4a-06",src:"s4a",lv:1,a:true,
+ q:"Reactでは、index.html内の id=\"root\" を持つタグが、Reactによる画面構築の起点になる。",
+ exp:"<div id=\"root\"></div> を置き、main.jsx で createRoot(document.getElementById(\"root\")).render(<App />) を呼んで画面を描きます。",
+ ref:"React"},
+{id:"s4a-07",src:"s4a",lv:2,a:false,
+ q:"（課題5）JavaのSetに「りんご、いちご、バナナ、りんご、みかん、いちご」の6個を add() すると、要素数は6になる。",
+ exp:"Setは重複を許さないので、りんご・いちご・バナナ・みかんの4個になります（ArrayListなら6個）。",
+ ref:"課題5"},
+{id:"s4a-08",src:"s4a",lv:2,a:true,
+ q:"（課題5）JavaのMapに（\"工学部\",\"建築学科\"）（\"情報科学部\",\"IS科\"）（\"情報科学部\",\"IM科\"）（\"工学部\",\"機械工学科\"）（\"工学部\",\"応用科学科\"）を put() すると、要素数は2になる。",
+ exp:"keyはユニークなので、同じkeyで put すると値が上書きされます。keyは「工学部」と「情報科学部」の2つだけなので、要素数は2です。",
+ ref:"課題5"},
+{id:"s4a-09",src:"s4a",lv:1,a:true,
+ q:"（課題3）C++で多重継承したとき、上位クラスに同じ名前のメンバ関数があると、「スーパクラス名::メンバ関数名()」で指定して選ぶ。指定しないとコンパイルエラーになる。",
+ exp:"関数名だけではどちらか特定できないのでコンパイルエラーになります。Javaでは、インタフェースのメソッドをオーバライドするときに「インタフェース名.super.メソッド名();」で指定します。",
+ ref:"課題3"},
+
+// ===== 第5回 JavaScript =====
+{id:"s5-01",src:"s5",lv:1,a:true,
+ q:"クライアントサイドのJavaScriptは、セキュリティのため、クライアントPCのファイルにアクセスできない。",
+ exp:"通常のJavaScriptはブラウザ上で動き、クライアントPCのファイルにはアクセスできません。サーバサイドで動くのはNode.jsです。",
+ ref:"JavaScriptの種類"},
+{id:"s5-02",src:"s5",lv:1,a:true,
+ q:"<body onload=\"main();\"> と書くと、ページの読み込みが完了したときにJavaScriptの main() 関数が呼ばれる。",
+ exp:"onload でページ読み込み時に関数を起動できます。関数名は main() でも initialize() でも自由に付けられます。",
+ ref:"JavaScriptとHTML"},
+{id:"s5-03",src:"s5",lv:1,a:true,
+ q:"JavaScriptからHTML要素を読み書きするときは、要素に id を付け、document.getElementById() で取得する。",
+ exp:"例：document.getElementById(\"kekka\").innerHTML = kekka; のように、idで要素を指定して書き込みます。",
+ ref:"C演習Iの最大最小探索を実現するJavaScriptプログラム"},
+{id:"s5-04",src:"s5",lv:2,a:true,
+ q:"<div> のように開始・終了タグで囲まれた要素には innerHTML を使い、<input type=\"text\"> のように閉じないタグには .value を使う。",
+ exp:"囲まれたタグの中身は innerHTML、入力欄のような閉じないタグの値は .value で読み書きします。",
+ ref:"サンプルプログラム3"},
+{id:"s5-05",src:"s5",lv:2,a:false,
+ q:"JavaScriptの変数宣言は現在も var が推奨で、const や let は使えない。",
+ exp:"var も使えますが古い書き方です。現在は定数を const、変数を let で宣言するのが通常です。",
+ ref:"C演習Iの最大最小探索を実現するJavaScriptプログラム"},
+{id:"s5-06",src:"s5",lv:1,a:false,
+ q:"JavaScriptでも、CやJavaのように、数値用と文字列用で変数の型を分けて宣言する必要がある。",
+ exp:"JavaScriptの変数宣言（var／let／const）に型はなく、数値も文字列も同じように扱います。配列は var x = [1, 2, -3, …]; のように [ ] で表します。",
+ ref:"js_sample1.html後半"},
+{id:"s5-07",src:"s5",lv:1,a:true,
+ q:"setTimeout() は指定したミリ秒後に関数を起動する。自分自身を指定すると繰り返し処理になり、アニメーションのような表現ができる。",
+ exp:"例：setTimeout('draw()', 20); で20ミリ秒ごとに draw() を繰り返します。終了はフラグで判定します。現在は requestAnimationFrame が主流です。",
+ ref:"リサージュ（繰り返し描画）"},
+{id:"s5-08",src:"s5",lv:1,a:true,
+ q:"JavaScriptの eval() 関数を使うと、文字列で書いた式を数式として計算できる。",
+ exp:"例：equr='200*exp(-0.01*t)' のような文字列を eval(equr) で計算します。Javaでも javax.script の ScriptEngine を使えば同じことができます。",
+ ref:"リサージュ／JavaScriptの機能をJavaで使う"},
+{id:"s5-09",src:"s5",lv:1,a:true,
+ q:"Ajaxでは、XMLHttpRequest のインスタンスで open() によりメソッドとURLを設定し、send() でリクエストを送信する。",
+ exp:"xmlHttp.open(\"GET\", linkurl, true); xmlHttp.send(null); のように書きます。第3引数の true は非同期を意味します。",
+ ref:"Ajax"},
+{id:"s5-10",src:"s5",lv:1,a:true,
+ q:"Ajaxの受信処理では、xmlHttp.readyState == 4 かつ xmlHttp.status == 200 のとき、正常な応答を受け取ったと判断する。",
+ exp:"onreadystatechange に設定した関数がサーバからの応答で起動されます。この条件を満たしたら処理を続けます。",
+ ref:"Ajaxプログラム解説"},
+{id:"s5-11",src:"s5",lv:2,a:false,
+ q:"Ajaxは同期型の通信が基本で、非同期の受信処理を書く必要があるのはPOSTのときだけである。",
+ exp:"Ajaxでは同期型は使えなくなっています。非同期の記述は元々POST型用でしたが、現在はGETでも必須です。コールバック関数で応答を処理します。",
+ ref:"Ajaxは同期型は使えなくなっている"},
+{id:"s5-12",src:"s5",lv:1,a:true,
+ q:"Ajaxでは、HTMLを供給したサーバと異なるドメインへのアクセスは、サーバ側が Access-Control-Allow-Origin で許可しない限りできない。",
+ exp:"クロスオリジン要求を制限して、異なるオリジンのサイトからの不正なデータ取得を防ぐためです。許可がないとCORSエラーになります。",
+ ref:"Ajaxクロスオリジン問題"},
+{id:"s5-13",src:"s5",lv:2,a:false,
+ q:"AjaxでXML形式の応答を解析するときは、xmlHttp.responseText で応答を得る。",
+ exp:"XMLは xmlHttp.responseXML で得ます。responseText はJSONなどの文字列を得るときに使い、その文字列をパースします。",
+ ref:"AjaxでのXML処理"},
+{id:"s5-14",src:"s5",lv:1,a:true,
+ q:"jQueryでは、$(\"#txt\") のように # を付けてidでHTML要素を指定する。",
+ exp:"$ はjQueryを表します。$(\"#txt\").val() で入力値を取得したり、$(\"#result\").html(…) で内容を設定したりできます。",
+ ref:"JQuery"},
+{id:"s5-15",src:"s5",lv:1,a:true,
+ q:"JSONPは <script> タグの src 属性によるアクセスを利用するので、別ドメインのサーバのAPIでも呼び出せる。",
+ exp:"Ajaxは別ドメインへのアクセスを禁じていますが、<script> タグの src によるアクセスは別ドメインでも可能です。JSONPはこの性質を利用し、指定したコールバック関数に応答データを引数として渡してもらいます。",
+ ref:"JSONP"},
+{id:"s5-16",src:"s5",lv:2,a:false,
+ q:"JSONPは「データだけを受け取る」技術なので、悪意のあるサーバに任意のJavaScriptを実行される危険はない。",
+ exp:"JSONPは「他人（サーバ）のJavaScriptを実行する」技術です。<script> タグは送られたコードを無条件に実行するので、悪意のあるサーバが任意のプログラムを実行させることもできます。",
+ ref:"JSONP（脆弱性）"},
+{id:"s5-17",src:"s5",lv:2,a:true,
+ q:"OpenLayersでは、地図のViewはEPSG:3857（メルカトル図法）が標準で、データはEPSG:4326（緯度経度）が標準なので、変換が必要になる。",
+ exp:"ol.proj.transform([lng, lat], epsg4326, epsg3857) のように変換します。EPSG:4326はGPSの緯度経度（世界測地系）です。",
+ ref:"OpenLayers"},
+{id:"s5-18",src:"s5",lv:2,a:false,
+ q:"Canvasの座標は数学の座標と同じで、原点は左下、y軸は上向きが正である。",
+ exp:"Canvasの原点は左上で、y軸の向きが反転しています（下向きが正）。見かけの式を描くときは、yを反転してw/2・h/2ずらします。",
+ ref:"Canvasの座標について"},
+{id:"s5-19",src:"s5",lv:1,a:true,
+ q:"Google Maps APIは有料化されたため、クレジットカードを登録しないと使えない。無料の地図としてOpenLayers（国土地理院地図）がある。",
+ exp:"資料では「有料化されクレジット登録無いと使えない」とあり、無料の選択肢としてOpenLayersが紹介されています。",
+ ref:"GoogleMaps API JavaScriptの利用／OpenLayers"},
+];
+
+</script>
+<script>
+(function(){
+"use strict";
+var w = document.getElementById("jsWarn"); if (w) w.style.display = "none";
+const $ = s => document.querySelector(s);
+const SRC_KEYS = Object.keys(SOURCES);
+const QMAP = {}; QUESTIONS.forEach(q => { QMAP[q.id] = q; });
+const LS_KEY = "ws-maruBatsu-v1";
+
+/* ---------- state & storage ---------- */
+let st = { wrong: [], marks: [], hist: {} };   // hist[id] = [correct, wrong]
+function sanitize(o){
+  const ok = id => typeof id === "string" && QMAP[id];
+  const s = { wrong: [], marks: [], hist: {} };
+  if (o && typeof o === "object") {
+    if (Array.isArray(o.wrong)) s.wrong = [...new Set(o.wrong.filter(ok))];
+    if (Array.isArray(o.marks)) s.marks = [...new Set(o.marks.filter(ok))];
+    if (o.hist && typeof o.hist === "object")
+      for (const k in o.hist) if (ok(k) && Array.isArray(o.hist[k])) s.hist[k] = [o.hist[k][0]|0, o.hist[k][1]|0];
+  }
+  return s;
+}
+try { const raw = localStorage.getItem(LS_KEY); if (raw) st = sanitize(JSON.parse(raw)); } catch(e) {}
+
+function save(){
+  try { localStorage.setItem(LS_KEY, JSON.stringify(st)); } catch(e) {}
+}
+let storageOk = true;
+try { localStorage.setItem(LS_KEY + "-t", "1"); localStorage.removeItem(LS_KEY + "-t"); } catch(e) { storageOk = false; }
+
+/* ---------- home ---------- */
+const opt = { srcs: new Set(SRC_KEYS), pool: "all", num: 10, ord: "rand" };
+
+function renderSrcs(){
+  const box = $("#srcs"); box.innerHTML = "";
+  SRC_KEYS.forEach(k => {
+    const qs = QUESTIONS.filter(q => q.src === k);
+    let c = 0, w = 0, done = 0;
+    qs.forEach(q => { const h = st.hist[q.id]; if (h && (h[0] || h[1])) { done++; if (st.wrong.includes(q.id)) w++; else c++; } });
+    const b = document.createElement("button");
+    b.className = "src" + (opt.srcs.has(k) ? " on" : "");
+    b.innerHTML = `<span class="t">${SOURCES[k].short}</span><span class="d">${SOURCES[k].name}</span>
+      <span class="meter"><i class="c" style="width:${c/qs.length*100}%"></i><i class="w" style="width:${w/qs.length*100}%"></i></span>
+      <span class="cnt">${qs.length}問 ・ 解いた ${done} ・ 要復習 ${w}</span>`;
+    b.onclick = () => { opt.srcs.has(k) ? opt.srcs.delete(k) : opt.srcs.add(k); renderHome(); };
+    box.appendChild(b);
+  });
+}
+function poolFor(kind){
+  return QUESTIONS.filter(q => opt.srcs.has(q.src) &&
+    (kind === "all" || (kind === "wrong" ? st.wrong.includes(q.id) : st.marks.includes(q.id))));
+}
+function renderHome(){
+  $("#stTotal").textContent = QUESTIONS.length;
+  $("#stDone").textContent = Object.values(st.hist).filter(h => h[0] || h[1]).length;
+  $("#stWrong").textContent = st.wrong.length;
+  $("#stMark").textContent = st.marks.length;
+  $("#allSrc").textContent = opt.srcs.size === SRC_KEYS.length ? "すべて解除" : "すべて選択";
+  renderSrcs();
+  const counts = { all: poolFor("all").length, wrong: poolFor("wrong").length, mark: poolFor("mark").length };
+  $("#cAll").textContent = counts.all; $("#cWrong").textContent = counts.wrong; $("#cMark").textContent = counts.mark;
+  document.querySelectorAll("#poolSeg button").forEach(b => {
+    b.classList.toggle("on", b.dataset.v === opt.pool);
+  });
+  const pool = poolFor(opt.pool);
+  const n = opt.num === 0 ? pool.length : Math.min(opt.num, pool.length);
+  const btn = $("#startBtn");
+  btn.disabled = n === 0;
+  btn.textContent = n === 0 ? "出題できる問題がありません" : `${n}問をはじめる`;
+  let note = "";
+  if (opt.srcs.size === 0) note = "範囲を1つ以上選んでください。";
+  else if (opt.pool === "wrong") note = counts.wrong ? "間違えた問題に正解すると、このリストから外れます。" : "まだ間違えた問題はありません。";
+  else if (opt.pool === "mark") note = counts.mark ? "問題画面の ☆ でブックマークを追加・解除できます。" : "問題画面の ☆ を押すとブックマークできます。";
+  else if (opt.num && pool.length < opt.num) note = `選んだ範囲には${pool.length}問あります。`;
+  $("#startNote").textContent = note;
+}
+function bindSeg(sel, key, cast){
+  document.querySelectorAll(sel + " button").forEach(b => b.onclick = () => {
+    opt[key] = cast(b.dataset.v);
+    document.querySelectorAll(sel + " button").forEach(x => x.classList.toggle("on", x === b));
+    renderHome();
+  });
+}
+bindSeg("#poolSeg", "pool", String);
+bindSeg("#numSeg", "num", Number);
+bindSeg("#ordSeg", "ord", String);
+$("#allSrc").onclick = () => { opt.srcs = opt.srcs.size === SRC_KEYS.length ? new Set() : new Set(SRC_KEYS); renderHome(); };
+$("#startBtn").onclick = () => {
+  let pool = poolFor(opt.pool);
+  if (opt.ord === "rand") pool = shuffle(pool);
+  if (opt.num) pool = pool.slice(0, opt.num);
+  if (opt.ord === "seq") pool.sort((a,b) => QUESTIONS.indexOf(a) - QUESTIONS.indexOf(b));
+  startQuiz(pool);
+};
+$("#resetBtn").onclick = () => $("#dlg").classList.remove("hidden");
+$("#dlgNo").onclick = () => $("#dlg").classList.add("hidden");
+$("#dlgYes").onclick = () => { st = { wrong: [], marks: [], hist: {} }; save(); $("#dlg").classList.add("hidden"); renderHome(); };
+
+function shuffle(a){ a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
+function esc(s){ return s.replace(/[&<>"]/g, c => ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;" }[c])); }
+// highlight code-ish fragments
+const CODE_RE = /(<[^<>]+>|@[A-Za-z]+|[A-Za-z_$][\w.$]*\([^()（）]*\)|\b(?:innerHTML|responseXML|responseText|readyState|getParameter|synchronized|throws Exception|finally|rebind|bind|lookup|wsimport|var|let|const)\b|\.value\b)/g;
+function fmt(s){
+  let out = "", last = 0, m;
+  CODE_RE.lastIndex = 0;
+  while ((m = CODE_RE.exec(s))) {
+    out += esc(s.slice(last, m.index)) + "<code>" + esc(m[0]) + "</code>";
+    last = m.index + m[0].length;
+  }
+  return out + esc(s.slice(last));
+}
+
+/* ---------- quiz ---------- */
+let run = null;
+function show(id){ ["home","quiz","result"].forEach(s => $("#" + s).classList.toggle("hidden", s !== id)); window.scrollTo(0,0); }
+function startQuiz(list){
+  run = { list, i: 0, res: [], answered: false };
+  show("quiz"); renderQ();
+}
+function renderQ(){
+  const q = run.list[run.i];
+  run.answered = false;
+  $("#pbar").style.width = (run.i / run.list.length * 100) + "%";
+  $("#plbl").textContent = `${run.i + 1} / ${run.list.length}`;
+  const ok = run.res.filter(r => r.ok).length;
+  $("#pscore").textContent = run.res.length ? `正解 ${ok} / ${run.res.length}` : "";
+  $("#qno").textContent = "Q" + (run.i + 1);
+  $("#qsrc").textContent = SOURCES[q.src].short;
+  $("#qtext").innerHTML = fmt(q.q);
+  renderMark();
+  ["#btnO","#btnX"].forEach(s => { const b = $(s); b.disabled = false; b.classList.remove("dim","picked"); });
+  $("#verdict").classList.add("hidden");
+  $("#nextBtn").classList.add("hidden");
+}
+function renderMark(){
+  const q = run.list[run.i], on = st.marks.includes(q.id);
+  $("#qmark").classList.toggle("on", on);
+  $("#qmark").textContent = on ? "★" : "☆";
+  $("#qmark").title = on ? "ブックマークを外す (B)" : "ブックマークする (B)";
+}
+function toggleMark(id){
+  st.marks = st.marks.includes(id) ? st.marks.filter(x => x !== id) : [...st.marks, id];
+  save();
+}
+$("#qmark").onclick = () => { toggleMark(run.list[run.i].id); renderMark(); };
+
+function answer(val){
+  if (!run || run.answered) return;
+  run.answered = true;
+  const q = run.list[run.i], ok = val === q.a;
+  run.res.push({ id: q.id, ok, pick: val });
+  const h = st.hist[q.id] || [0,0]; ok ? h[0]++ : h[1]++; st.hist[q.id] = h;
+  if (ok) st.wrong = st.wrong.filter(x => x !== q.id);
+  else if (!st.wrong.includes(q.id)) st.wrong.push(q.id);
+  save();
+  const pickBtn = val ? $("#btnO") : $("#btnX"), other = val ? $("#btnX") : $("#btnO");
+  pickBtn.classList.add("picked"); other.classList.add("dim");
+  $("#btnO").disabled = $("#btnX").disabled = true;
+  const v = $("#verdict");
+  v.className = "verdict " + (ok ? "ok" : "ng");
+  $("#vhead").textContent = ok ? "◎ 正解！" : "✕ 不正解";
+  $("#vans").textContent = q.a ? "○" : "×";
+  $("#vans").style.color = q.a ? "var(--maru)" : "var(--batsu)";
+  $("#vexp").innerHTML = fmt(q.exp);
+  $("#vref").textContent = `${SOURCES[q.src].name} ／ ${q.ref}`;
+  $("#nextBtn").textContent = run.i + 1 < run.list.length ? "次の問題へ →" : "結果を見る →";
+  $("#nextBtn").classList.remove("hidden");
+  $("#pscore").textContent = `正解 ${run.res.filter(r => r.ok).length} / ${run.res.length}`;
+  $("#pbar").style.width = ((run.i + 1) / run.list.length * 100) + "%";
+  setTimeout(() => $("#nextBtn").scrollIntoView({ behavior: "smooth", block: "nearest" }), 60);
+  $("#nextBtn").focus({ preventScroll: true });
+}
+$("#btnO").onclick = () => answer(true);
+$("#btnX").onclick = () => answer(false);
+$("#nextBtn").onclick = next;
+function next(){
+  if (!run || !run.answered) return;
+  run.i++;
+  if (run.i < run.list.length) { renderQ(); window.scrollTo({ top: 0, behavior: "smooth" }); }
+  else showResult();
+}
+$("#quitBtn").onclick = () => { if (run && run.res.length) showResult(); else { run = null; show("home"); renderHome(); } };
+
+document.addEventListener("keydown", e => {
+  if ($("#quiz").classList.contains("hidden") || e.metaKey || e.ctrlKey || e.altKey) return;
+  const k = e.key.toLowerCase();
+  if (!run.answered && (k === "o" || k === "1" || k === "arrowleft")) { e.preventDefault(); answer(true); }
+  else if (!run.answered && (k === "x" || k === "2" || k === "arrowright")) { e.preventDefault(); answer(false); }
+  else if (run.answered && (k === "enter" || k === " " || k === "n")) { e.preventDefault(); next(); }
+  else if (k === "b") { toggleMark(run.list[run.i].id); renderMark(); }
+});
+
+/* ---------- result ---------- */
+function showResult(){
+  show("result");
+  const n = run.res.length, ok = run.res.filter(r => r.ok).length, pct = n ? Math.round(ok / n * 100) : 0;
+  $("#rBig").innerHTML = `${ok}<small> / ${n}問</small>`;
+  $("#rPct").textContent = pct + "%";
+  const arc = $("#ringArc");
+  arc.style.stroke = pct >= 80 ? "#2c8a5a" : pct >= 60 ? "#e0a21b" : "#c43d33";
+  requestAnimationFrame(() => requestAnimationFrame(() => arc.style.strokeDashoffset = 402.1 * (1 - pct / 100)));
+  $("#rMsg").textContent = pct === 100 ? "全問正解！完璧です 🎉" : pct >= 80 ? "よくできました。あと少しで満点！" : pct >= 60 ? "合格ライン。間違えた所を復習しましょう。" : "解説を読んで、もう一度挑戦しましょう。";
+  const wrongIds = run.res.filter(r => !r.ok).map(r => r.id);
+  const rb = $("#retryWrong");
+  rb.disabled = wrongIds.length === 0;
+  rb.textContent = wrongIds.length ? `間違えた${wrongIds.length}問を解き直す` : "間違いはありません";
+  rb.onclick = () => startQuiz(shuffle(wrongIds.map(id => QMAP[id])));
+  const box = $("#rlist"); box.innerHTML = "";
+  run.res.forEach((r, i) => {
+    const q = QMAP[r.id];
+    const d = document.createElement("div");
+    d.className = "card ritem " + (r.ok ? "ok" : "ng");
+    const markOn = st.marks.includes(q.id);
+    d.innerHTML = `<div class="res">${r.ok ? "○" : "×"}</div>
+      <div><div class="rq"><b>Q${i + 1}</b>　${fmt(q.q)}</div>
+      ${r.ok ? "" : `<div class="rexp">正解は <b style="color:${q.a ? "var(--maru)" : "var(--batsu)"}">${q.a ? "○" : "×"}</b>　${fmt(q.exp)}<div class="ref">${esc(SOURCES[q.src].short + " ／ " + q.ref)}</div></div>`}</div>
+      <button class="mark ${markOn ? "on" : ""}" aria-label="ブックマーク" title="ブックマーク">${markOn ? "★" : "☆"}</button>`;
+    const mb = d.querySelector(".mark");
+    mb.onclick = () => { toggleMark(q.id); const on = st.marks.includes(q.id); mb.classList.toggle("on", on); mb.textContent = on ? "★" : "☆"; };
+    box.appendChild(d);
+  });
+}
+$("#toHome").onclick = () => { run = null; show("home"); renderHome(); };
+
+renderHome();
+if (!storageOk) { $("#sync").classList.remove("on"); $("#sync span").textContent = "このブラウザでは記録を保存できません（閉じると消えます）"; }
+})();
+</script>
+</body>
+</html>
